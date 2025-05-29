@@ -87,7 +87,7 @@ For Ubuntu 22.04, you can expand swap memory as follows:
 /home
 └── your_username
    ├── connectedhomeip
-   └── rtl8730e-linux-sdk-3.1-release
+   └── rtl8730e-linux-sdk
 ```
 
 ## Setup connectedhomeip
@@ -98,10 +98,14 @@ For Ubuntu 22.04, you can expand swap memory as follows:
 	python3-venv python3-dev python3-pip unzip \
 	libgirepository1.0-dev libcairo2-dev libreadline-dev
 	```
-2. Git clone `connectedhomeip`
+2. Git clone `connectedhomeip`, specify the connectedhomeip version branch
 	```bash
-	git clone -b v1.3-branch --recurse-submodules https://github.com/project-chip/connectedhomeip.git
+	git clone -b <branch> --recurse-submodules https://github.com/project-chip/connectedhomeip.git
 	```
+	- For example,
+		```bash
+		git clone -b v1.4-branch --recurse-submodules https://github.com/project-chip/connectedhomeip.git
+		```
 3. Navigate inside `connectedhomeip`
 	```bash
 	cd connectedhomeip
@@ -142,13 +146,17 @@ For Ubuntu 22.04, you can expand swap memory as follows:
 	sudo mkdir -p /opt/rtk-toolchain
 	sudo chown -R ${USER}:${USER} /opt/rtk-toolchain
 	```
-5. Get Realtek Yocto and Matter source
+5. Get Realtek Yocto and Matter source, specify the branch and the manifest that supports Matter
 	```bash
-	mkdir rtl8730e-linux-sdk-3.1-release
-	cd rtl8730e-linux-sdk-3.1-release
-	repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b ameba-3.1 -m default.xml
+	mkdir rtl8730e-linux-sdk
+	cd rtl8730e-linux-sdk
+	repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b <branch> -m <manifest>
 	repo sync
 	```
+	- For example,
+		```bash
+		repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b ameba-linux-kirkstone -m ameba-5.4.248-3.3.4.xml
+		```
 6. Run Yocto setup script
   	- This will add `ROOTDIR` as environment variable referring to Yocto directory
   	```bash
@@ -201,13 +209,14 @@ Matter recipes will build example matter application(s).
 Matter recipes will get built through the following chain:
 1. ameba-image-core
 2. packagegroup-matter-examples
-3. matter-non-ported-examples / matter-ported-examples / matter-custom-dac-examples
+3. matter-app-examples / matter-app-port-examples / matter-app-port-custom-dac-examples / matter-service-example
 
 ## Matter recipe types
 There are multiple matter recipes that have been prepared for you to use and explore.
-- `matter-non-ported-examples` recipe will add the Linux example matter applications from `connectedhomeip/examples/*/linux/`
-- `matter-ported-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/`
-- `matter-custom-dac-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/` that uses custom Device Attestation Certificate (DAC) for commissioning
+- `matter-app-examples` recipe will add the Linux example matter applications from `connectedhomeip/examples/*/linux/`
+- `matter-app-port-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/`
+- `matter-app-port-custom-dac-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/` that uses custom Device Attestation Certificate (DAC) for commissioning
+- `matter-service-example` recipe will add matter service example from `sources/yocto/meta-realtek-matter/recipes-matter/matter-service-example` to run matter as service/daemon
 
 For ported matter examples, a README.md is available at each of the subdirectory of the ported matter example source code `meta-realtek-matter/examples/`, to guide you to use the example.
 
@@ -350,11 +359,11 @@ rm -rf /tmp/chip*
 # Yocto Matter directories
 ## Installed matter application
 ### Compiled matter applications
-- `~/rtl8730e-linux-sdk-3.1-release/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-non-ported-examples/0.1-r0/image/`
+- `~/rtl8730e-linux-sdk/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-app-examples/0.1-r0/image/`
 ### Stripped matter applications
-- `~/rtl8730e-linux-sdk-3.1-release/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-non-ported-examples/0.1-r0/package`
+- `~/rtl8730e-linux-sdk/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-app-examples/0.1-r0/package`
 ## Logs
-- `~/rtl8730e-linux-sdk-3.1-release/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-non-ported-examples/0.1-r0/temp/`
+- `~/rtl8730e-linux-sdk/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-app-examples/0.1-r0/temp/`
 
 # Yocto Troubleshooting
 [AmebaSmart Yocto Troubleshoot](<AmebaSmart Yocto Troubleshoot.md>)

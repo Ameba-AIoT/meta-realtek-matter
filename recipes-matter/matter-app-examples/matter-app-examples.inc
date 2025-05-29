@@ -68,7 +68,7 @@ MATTER_APP_SRC_DIR ??= "${CHIP_ROOT}/examples/${MATTER_APP}/linux"
 MATTER_BUILD_DIR ??= "out/arm"
 
 # Specify the directory where the Matter application will be installed on the target device
-MATTER_APP_TARGET_DIR ??= "/matter-application"
+MATTER_APP_TARGET_DIR ??= "/matter-app-examples"
 
 # Specify CFLAGS to be passed
 PLATFORM_CFLAGS .= '-DCHIP_DEVICE_CONFIG_WIFI_STATION_IF_NAME=\"wlan0\"", "'

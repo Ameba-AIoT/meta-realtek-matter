@@ -1,4 +1,4 @@
-require matter-ported-examples.inc
+require matter-app-port-custom-dac-examples.inc
 inherit externalsrc
 
 EXTERNALSRC_SYMLINKS = ""
@@ -59,9 +59,11 @@ do_compile () {
 
 do_install () {
     install -d ${D}${MATTER_APP_TARGET_DIR}
+    install -d ${D}${MATTER_APP_TARGET_DIR}/myattestation
     
     for MATTER_APP in ${MATTER_APP_NAME}; do
-
+        cp -R --no-dereference --preserve=mode,links -v "${MATTER_APP_SRC_DIR}"/tools/factorydata/myattestation/* "${D}${MATTER_APP_TARGET_DIR}/myattestation"
+        
         IS_MATTER_APP_INSTALLED=0
         
         if [ ! -f "${MATTER_APP_SRC_DIR}/${MATTER_BUILD_FILENAME}" ]; then
@@ -101,4 +103,4 @@ do_install () {
     done
 }
 
-FILES:${PN} += "${MATTER_APP_TARGET_DIR}"
+FILES:${PN} += "${MATTER_APP_TARGET_DIR} ${MATTER_APP_TARGET_DIR}/myattestation"

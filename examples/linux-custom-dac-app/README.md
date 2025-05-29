@@ -1,10 +1,10 @@
-# linux-lighting-app example
+# linux-custom-dac-app example
 
 This is a modified example from linux-lighting-app. You may consult linux-lighting-app example README.md first to get the hardware LED working.
 
 This example demonstrates generation and use of test certificates and keys for matter commissioning.
 In the main function, `DacFilepath` variable is where you can put in the filepath of the certificates and keys.
-By default, the bitbake recipe shall copy the `myattestation` directory from `tools/factorydata` to the same folder as the executable binary `linux-custom-dac-app` at `/matter-ported-examples` directory on target AmebaSmart Yocto.
+By default, the bitbake recipe shall copy the `myattestation` directory from `tools/factorydata` to the same folder as the executable binary `linux-custom-dac-app` at `/matter-app-port-examples` directory on target AmebaSmart Yocto.
 
 ## Generating test Certificates and Keys
 1. Navigate to factorydata folder
@@ -77,7 +77,7 @@ We shall use chip-tool to commission.
 
 1. On target board, start the example
 ```bash
-cd /matter-ported-examples
+cd /matter-app-port-examples
 ./linux-custom-dac-app --wifi --discriminator 3840
 ```
 
@@ -85,12 +85,12 @@ cd /matter-ported-examples
 
 Commission using ble-wifi
 ```bash
-./chip-tool pairing ble-wifi 0x1234 "WIFI_SSID" "WIFI_PASSWORD" "20202021" "3840" --paa-trust-store-path ~/dev/rtl8730e-linux-sdk-3.1-release/sources/yocto/meta-realtek-matter/examples/linux-custom-dac-app/tools/factorydata/myattestation
+./chip-tool pairing ble-wifi 0x1234 "WIFI_SSID" "WIFI_PASSWORD" "20202021" "3840" --paa-trust-store-path ~/dev/rtl8730e-linux-sdk/sources/yocto/meta-realtek-matter/examples/linux-custom-dac-app/tools/factorydata/myattestation
 ```
 
 Alternatively, if the target board is already on same WIFI network as host machine, commission over network,
 ```bash
-./chip-tool pairing onnetwork-long 0x1234 20202021 3840 --paa-trust-store-path ~/dev/rtl8730e-linux-sdk-3.1-release/sources/yocto/meta-realtek-matter/examples/linux-custom-dac-app/tools/factorydata/myattestation
+./chip-tool pairing onnetwork-long 0x1234 20202021 3840 --paa-trust-store-path ~/dev/rtl8730e-linux-sdk/sources/yocto/meta-realtek-matter/examples/linux-custom-dac-app/tools/factorydata/myattestation
 ```
 
 You can check the current wireless WIFI settings on the target board as follows

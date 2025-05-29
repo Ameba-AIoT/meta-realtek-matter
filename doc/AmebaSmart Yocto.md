@@ -15,23 +15,26 @@
 	sudo mkdir -p /opt/rtk-toolchain
 	sudo chown -R ${USER}:${USER} /opt/rtk-toolchain
 	```
-4. Get AmebaSmart Yocto SDK.
+4. Get AmebaSmart Yocto SDK, specify the branch and the manifest that supports Matter
 	```bash
-	mkdir rtl8730e-linux-sdk-3.1-release
-	cd rtl8730e-linux-sdk-3.1-release
-	repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b ameba-3.1 -m ameba-3.1_r2.xml
+	mkdir rtl8730e-linux-sdk
+	cd rtl8730e-linux-sdk
+	repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b <branch> -m <manifest>
 	repo sync
 	```
-
+	- For example,
+		```bash
+		repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b ameba-linux-kirkstone -m ameba-5.4.248-3.3.4.xml
+		```
 # Build AmebaSmart Yocto
 > [!NOTE] 
 > - First build will take a long time (~6hrs)
 > - Requires internet connection to fetch source codes for packages
 > - Subsequent builds will be faster as it can use local cache
 
-1. Navigate inside `rtl8730e-linux-sdk-3.1-release`
+1. Navigate inside `rtl8730e-linux-sdk`
 	```bash
-	cd rtl8730e-linux-sdk-3.1-release
+	cd rtl8730e-linux-sdk
 	```
 2. Run Yocto setup script
 	```bash
@@ -48,7 +51,7 @@
 	```bash
 	mfw
 	```
-5. Built images can be found at `~/rtl8730e-linux-sdk-3.1-release/images/`
+5. Built images can be found at `~/rtl8730e-linux-sdk/images/`
 # Clean commands
 ## Clean build
 ```bash

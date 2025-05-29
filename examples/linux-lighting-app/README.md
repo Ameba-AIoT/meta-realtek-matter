@@ -57,7 +57,7 @@ This example demonstrates controlling LED brightness.
 DISTRO_FEATURES:append = " matter "
 ```
 
-2. Edit the file `sources/yocto/meta-realtek-matter/recipes-matter/matter-ported-examples/matter-ported-examples.inc`, with the following
+2. Edit the file `sources/yocto/meta-realtek-matter/recipes-matter/matter-app-port-examples/matter-app-port-examples.inc`, with the following
 ```bash
 MATTER_APP_NAME ??= " \
     linux-lighting-app \
@@ -84,7 +84,7 @@ We shall use chip-tool to control the led.
 
 1. On target board, start the example
 ```bash
-cd /matter-ported-examples
+cd /matter-app-port-examples
 ./linux-lighting-app --wifi --discriminator 3840
 ```
 

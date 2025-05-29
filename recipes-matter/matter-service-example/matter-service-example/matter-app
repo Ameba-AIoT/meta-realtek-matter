@@ -1,0 +1,89 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          matter-app
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     3 5
+# Default-Stop:      0 1 6
+# Short-Description: Run matter-app as service/daemon
+### END INIT INFO
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="Matter Application"
+NAME="matter-app"
+PIDFILE=/var/run/$NAME.pid
+LOGFILE=/var/log/$NAME.log
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Set DAEMON to any example that you would like to run as service/daemon
+# DAEMON format: {MATTER_APP_TARGET_DIR}/{MATTER_APP_NAME}
+# e.g: /matter-app-examples/chip-lighting-app, /matter-app-port-examples/linux-custom-dac-app
+DAEMON="/matter-app-port-examples/linux-lighting-app"
+DAEMON_ARGS="--wifi --vendor-id 0xFFF1 --product-id 0x8001 --passcode 20202021 --discriminator 3840"
+
+. /etc/init.d/functions || exit 1
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+#
+# Function that starts the service/daemon status
+#
+start_matter_app() {
+    echo -n "Starting $DESC: "
+    start-stop-daemon --start \
+        --make-pidfile --pidfile $PIDFILE \
+        --exec "$DAEMON" -- $DAEMON_ARGS 2>&1 | (tee $LOGFILE) &
+    echo "$NAME."
+}
+
+#
+# Function that stops the service/daemon status
+#
+stop_matter_app() {
+    echo -n "Stopping $DESC: "
+    start-stop-daemon --stop --retry 5 --oknodo \
+        --exec $DAEMON
+    echo "$NAME."
+    rm -f "$PIDFILE"
+}
+
+#
+# Function that shows the service/daemon status
+#
+status_of_matter_app() {
+    local pid status
+
+    status=0
+    # pidof output null when no program is running, so no "2>/dev/null".
+    pid=`pidofproc $DAEMON` || status=$?
+    case $status in
+        0)
+            echo "$NAME: $DESC is running ($pid)."
+            exit 0
+            ;;
+        *)
+            echo "$NAME: $DESC is not running." >&2
+            exit $status
+            ;;
+    esac
+}
+
+case "$1" in
+    start)
+        start_matter_app
+        ;;
+    restart|reload|force-reload)
+        stop_matter_app
+        start_matter_app
+        ;;
+    stop|force-stop)
+        stop_matter_app
+        ;;
+    status)
+        status_of_matter_app
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|status|restart|reload|force-reload}"
+        exit 1
+        ;;
+esac

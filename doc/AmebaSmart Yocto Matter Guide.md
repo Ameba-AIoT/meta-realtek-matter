@@ -169,10 +169,15 @@ For Ubuntu 22.04, you can expand swap memory as follows:
   	```bash
   	bitbake-layers add-layer "${ROOTDIR}/sources/yocto/meta-realtek-matter"
   	```
-	- Add matter to DISTRO_FEATURES at `conf/local.conf`
+	- Add matter to DISTRO_FEATURES at `${BUILDDIR}/conf/local.conf`
 	```
 	DISTRO_FEATURES:append = " matter "
 	```
+	- The path to `${BUILDDIR}` can be found by running the following command only after `source envsetup.sh` is run
+	```bash
+	echo ${BUILDDIR}
+	```
+
 8. (Optional) [Edit matter recipe settings](<#Edit-matter-recipe-settings>)
 
 # Edit matter recipe settings
@@ -265,9 +270,76 @@ The steps to build matter is the same as the one from AmebaSmart Yocto SDK
 > [!TIP]
 > [Remove stale chip configuration](<#remove-stale-chip-configuration>) on target AmebaSmart before every new commissioning
 
+## Executing the Matter Application
+There are two ways to execute Matter application, execute as a service, or execute it manually
+
+### Running as Service/Daemon
+Service/Daemon is simply defined as a background process. Service execution utilizes initialization script and start-stop-daemon. The example flow can be found at meta-realtek-matter/recipes-matter/matter-service-example. By default, matter-service-example is added into the packagegroups recipe. With this recipe, it allows the Matter application to start automatically when the device boots and automatically stops the Matter application when shutdown or restart is invoked at the device.
+
+#### Starting the Service
+1. Make sure that matter-service-example is added into the `recipes-matter/packagegroups/packagegroup-matter-examples.bb` recipe
+	```bash
+	RDEPENDS:${PN} = "\
+	...
+	matter-service-example \
+	...
+	"
+	```
+2. Modify the `DAEMON` and `DAEMON_ARGS` accordingly
+	```bash
+	DAEMON="/matter-app-port-examples/linux-lighting-app"
+	DAEMON_ARGS="--wifi --discriminator 3840"
+	```
+3. Build project, flash the image, and reboot the device. Matter application should start automatically
+	```bash
+	Starting Matter Application: matter-app.
+	```
+
+#### Controlling the Service
+The matter-app service can be controlled using the service command. To control matter-app service, run the command:
+```bash
+service matter-app <command>
+```
+Available commands are:
+- `start`: To start matter-app service
+- `restart`, `reload`, or `force-reload`: To restart matter-app service
+- `stop`, or `force-stop`: To stop matter-app service
+- `status`: To check the status of matter-app service
+
+Please refer to meta-realtek-matter/recipes-matter/matter-service-example/matter-service-example/matter-app for details.
+
+#### Stopping the Service
+1. Stop using the service command
+	```bash
+	service matter-app stop/force-stop
+	```
+2. Matter application should stop
+	```bash
+	Stopping Matter Application: ...
+	```
+
+#### Removing matter-service-example
+1. Remove `matter-service-example` from `recipes-matter/packagegroups/packagegroup-matter-examples.bb` recipe
+	```bash
+	RDEPENDS:${PN} = "\
+	...
+	matter-service-example \ # <-- remove this
+	...
+	"
+	```
+	- Note that when removing matter recipes to be built, commenting out a line with `#` does not work for `RDEPENDS`. Please delete the corresponding line of the matter recipes you want remove instead.
+2. [Build Yocto Matter](<#build-yocto-matter>)
+
+### Running Manually
+Matter application can also be executed manually without executing it as a service
+
+#### Starting the Application
+> [!TIP]
+> Before starting the application manually, it is recommended to [stop the service](<#stopping-the-service>), or [remove matter-service-example](<#removing-matter-service-example>)
+
 1. Navigate to directory containing installed matter apps
 	```bash
-	cd /matter-application
+	cd /matter-app-examples or /matter-app-port-examples
 	```
 2. List installed matter apps
 	```bash
@@ -279,15 +351,34 @@ The steps to build matter is the same as the one from AmebaSmart Yocto SDK
 	```bash
 	./chip-lighting-app --wifi --discriminator 3840
 	```
-4. Look for the following line in the output logs and open the link in a web browser to see the QR code for commissioning
-	```bash
-	CHIP:SVR: https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT%3A-24J042C00KA0648G00
+4. Matter application should start and do initialization
 	```
-	- You should observe the following generated QR code,
+	[1520624087.811811][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Using KVS config file: /tmp/chip_kvs
+	[1520624087.813484][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Attempt to re-initialize with KVS config file: /tmp/chip_kvs
+	[1520624087.824819][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Using KVS config file: /tmp/chip_factory.ini
+	[1520624087.825400][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Using KVS config file: /tmp/chip_config.ini
+	...
+	```
 
-		![QR code for commissioning with discriminator 3840](<images/commissioning_qr_code_discriminator_3840.png>)
+#### Stopping the Application
+1. Send terminate signal by pressing Ctrl + C
+	```bash
+	^C[1520624091.100455][1577:1577] CHIP:DL: Select failed: src/system/SystemLayerImplSelect.cpp:714: OS Error 0x02000004: Interrupted system call
+	[1520624091.100594][1577:1577] CHIP:ZCL: Emitting ShutDown event
+	[1520624091.100750][1577:1577] CHIP:EVL: LogEvent event number: 0x0000000000120002 priority: 2, endpoint id:  0x0 cluster id: 0x0000_0028 event id: 0x1 Epoch timestamp: 0x000001620C423FDC
+	```
+2. Matter Application should stop
 
-		The QR code can be scanned by a commissioner (smartphone running Google Home, Apple HomeKit, Samsung SmartThings, or Home Assistant).
+## Expected Output Log
+Look for the following line in the output logs and open the link in a web browser to see the QR code for commissioning
+```bash
+CHIP:SVR: https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT%3A-24J042C00KA0648G00
+```
+- You should observe the following generated QR code,
+
+	![QR code for commissioning with discriminator 3840](<images/commissioning_qr_code_discriminator_3840.png>)
+
+	The QR code can be scanned by a commissioner (smartphone running Google Home, Apple HomeKit, Samsung SmartThings, or Home Assistant).
 
 # Commissioning
 To commission using Google Home, Apple Homekit, Samsung SmartThings, or Home Assistant, consult the vendor’s guide.

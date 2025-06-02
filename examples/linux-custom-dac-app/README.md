@@ -65,9 +65,13 @@ myattestation/Chip-Test-DAC-FFF1-8001-PrivKey-1.der
 
 
 ## Building
-1. Ensure that `matter` is added to `DISTRO_FEATURES` at `local.conf`
+1. Ensure that `matter` is added to `DISTRO_FEATURES` at `${BUILDDIR}/conf/local.conf`
 ```bash
 DISTRO_FEATURES:append = " matter "
+```
+- The path to `${BUILDDIR}` can be found by running the following command only after `source envsetup.sh` is run
+```bash
+echo ${BUILDDIR}
 ```
 
 2. Follow [AmebaSmart Yocto Matter Guide](<../../doc/AmebaSmart Yocto Matter Guide.md>) for building, flashing, commissioning.

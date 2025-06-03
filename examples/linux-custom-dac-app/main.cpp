@@ -171,10 +171,10 @@ int main(int argc, char * argv[])
 
     DeviceAttestationCredentialsFilepath DacFilepath =
     {
-        .dac_cert_filepath = "myattestation/Chip-Test-DAC-FFF1-8001-Cert-1.der",
-        .dac_key_filepath = "myattestation/Chip-Test-DAC-FFF1-8001-PrivKey-1.der",
-        .pai_cert_filepath = "myattestation/Chip-Test-PAI-FFF1-8001-Cert.der",
-        .cd_filepath = "myattestation/Chip-Test-CD-FFF1-8001.der",
+        .dac_cert_filepath = "/matter-app-port-examples/myattestation/Chip-Test-DAC-FFF1-8001-Cert-1.der",
+        .dac_key_filepath  = "/matter-app-port-examples/myattestation/Chip-Test-DAC-FFF1-8001-PrivKey-1.der",
+        .pai_cert_filepath = "/matter-app-port-examples/myattestation/Chip-Test-PAI-FFF1-8001-Cert.der",
+        .cd_filepath       = "/matter-app-port-examples/myattestation/Chip-Test-CD-FFF1-8001.der",
     };
 
     gFactoryDataProvider.Init(DacFilepath);

@@ -87,7 +87,7 @@ For Ubuntu 22.04, you can expand swap memory as follows:
 /home
 └── your_username
    ├── connectedhomeip
-   └── rtl8730e-linux-sdk-3.1-release
+   └── rtl8730e-linux-sdk
 ```
 
 ## Setup connectedhomeip
@@ -98,10 +98,14 @@ For Ubuntu 22.04, you can expand swap memory as follows:
 	python3-venv python3-dev python3-pip unzip \
 	libgirepository1.0-dev libcairo2-dev libreadline-dev
 	```
-2. Git clone `connectedhomeip`
+2. Git clone `connectedhomeip`, specify the connectedhomeip version branch
 	```bash
-	git clone -b v1.3-branch --recurse-submodules https://github.com/project-chip/connectedhomeip.git
+	git clone -b <branch> --recurse-submodules https://github.com/project-chip/connectedhomeip.git
 	```
+	- For example,
+		```bash
+		git clone -b v1.4-branch --recurse-submodules https://github.com/project-chip/connectedhomeip.git
+		```
 3. Navigate inside `connectedhomeip`
 	```bash
 	cd connectedhomeip
@@ -142,13 +146,17 @@ For Ubuntu 22.04, you can expand swap memory as follows:
 	sudo mkdir -p /opt/rtk-toolchain
 	sudo chown -R ${USER}:${USER} /opt/rtk-toolchain
 	```
-5. Get Realtek Yocto and Matter source
+5. Get Realtek Yocto and Matter source, specify the branch and the manifest that supports Matter
 	```bash
-	mkdir rtl8730e-linux-sdk-3.1-release
-	cd rtl8730e-linux-sdk-3.1-release
-	repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b ameba-3.1 -m default.xml
+	mkdir rtl8730e-linux-sdk
+	cd rtl8730e-linux-sdk
+	repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b <branch> -m <manifest>
 	repo sync
 	```
+	- For example,
+		```bash
+		repo init -u https://github.com/Ameba-AIoT/ameba-linux-manifest -b ameba-linux-scarthgap -m ameba-6.6.30-1.0.1.xml
+		```
 6. Run Yocto setup script
   	- This will add `ROOTDIR` as environment variable referring to Yocto directory
   	```bash
@@ -161,10 +169,15 @@ For Ubuntu 22.04, you can expand swap memory as follows:
   	```bash
   	bitbake-layers add-layer "${ROOTDIR}/sources/yocto/meta-realtek-matter"
   	```
-	- Add matter to DISTRO_FEATURES at `conf/local.conf`
+	- Add matter to DISTRO_FEATURES at `${BUILDDIR}/conf/local.conf`
 	```
 	DISTRO_FEATURES:append = " matter "
 	```
+	- The path to `${BUILDDIR}` can be found by running the following command only after `source envsetup.sh` is run
+	```bash
+	echo ${BUILDDIR}
+	```
+
 8. (Optional) [Edit matter recipe settings](<#Edit-matter-recipe-settings>)
 
 # Edit matter recipe settings
@@ -201,13 +214,14 @@ Matter recipes will build example matter application(s).
 Matter recipes will get built through the following chain:
 1. ameba-image-core
 2. packagegroup-matter-examples
-3. matter-non-ported-examples / matter-ported-examples / matter-custom-dac-examples
+3. matter-app-examples / matter-app-port-examples / matter-app-port-custom-dac-examples / matter-service-example
 
 ## Matter recipe types
 There are multiple matter recipes that have been prepared for you to use and explore.
-- `matter-non-ported-examples` recipe will add the Linux example matter applications from `connectedhomeip/examples/*/linux/`
-- `matter-ported-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/`
-- `matter-custom-dac-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/` that uses custom Device Attestation Certificate (DAC) for commissioning
+- `matter-app-examples` recipe will add the Linux example matter applications from `connectedhomeip/examples/*/linux/`
+- `matter-app-port-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/`
+- `matter-app-port-custom-dac-examples` recipe will add ported example matter applications from `sources/yocto/meta-realtek-matter/examples/` that uses custom Device Attestation Certificate (DAC) for commissioning
+- `matter-service-example` recipe will add matter service example from `sources/yocto/meta-realtek-matter/recipes-matter/matter-service-example` to run matter as service/daemon
 
 For ported matter examples, a README.md is available at each of the subdirectory of the ported matter example source code `meta-realtek-matter/examples/`, to guide you to use the example.
 
@@ -256,9 +270,76 @@ The steps to build matter is the same as the one from AmebaSmart Yocto SDK
 > [!TIP]
 > [Remove stale chip configuration](<#remove-stale-chip-configuration>) on target AmebaSmart before every new commissioning
 
+## Executing the Matter Application
+There are two ways to execute Matter application, execute as a service, or execute it manually
+
+### Running as Service/Daemon
+Service/Daemon is simply defined as a background process. Service execution utilizes initialization script and start-stop-daemon. The example flow can be found at meta-realtek-matter/recipes-matter/matter-service-example. By default, matter-service-example is added into the packagegroups recipe. With this recipe, it allows the Matter application to start automatically when the device boots and automatically stops the Matter application when shutdown or restart is invoked at the device.
+
+#### Starting the Service
+1. Make sure that matter-service-example is added into the `recipes-matter/packagegroups/packagegroup-matter-examples.bb` recipe
+	```bash
+	RDEPENDS:${PN} = "\
+	...
+	matter-service-example \
+	...
+	"
+	```
+2. Modify the `DAEMON` and `DAEMON_ARGS` accordingly
+	```bash
+	DAEMON="/matter-app-port-examples/linux-lighting-app"
+	DAEMON_ARGS="--wifi --discriminator 3840"
+	```
+3. Build project, flash the image, and reboot the device. Matter application should start automatically
+	```bash
+	Starting Matter Application: matter-app.
+	```
+
+#### Controlling the Service
+The matter-app service can be controlled using the service command. To control matter-app service, run the command:
+```bash
+service matter-app <command>
+```
+Available commands are:
+- `start`: To start matter-app service
+- `restart`, `reload`, or `force-reload`: To restart matter-app service
+- `stop`, or `force-stop`: To stop matter-app service
+- `status`: To check the status of matter-app service
+
+Please refer to meta-realtek-matter/recipes-matter/matter-service-example/matter-service-example/matter-app for details.
+
+#### Stopping the Service
+1. Stop using the service command
+	```bash
+	service matter-app stop/force-stop
+	```
+2. Matter application should stop
+	```bash
+	Stopping Matter Application: ...
+	```
+
+#### Removing matter-service-example
+1. Remove `matter-service-example` from `recipes-matter/packagegroups/packagegroup-matter-examples.bb` recipe
+	```bash
+	RDEPENDS:${PN} = "\
+	...
+	matter-service-example \ # <-- remove this
+	...
+	"
+	```
+	- Note that when removing matter recipes to be built, commenting out a line with `#` does not work for `RDEPENDS`. Please delete the corresponding line of the matter recipes you want remove instead.
+2. [Build Yocto Matter](<#build-yocto-matter>)
+
+### Running Manually
+Matter application can also be executed manually without executing it as a service
+
+#### Starting the Application
+> [!TIP]
+> Before starting the application manually, it is recommended to [stop the service](<#stopping-the-service>), or [remove matter-service-example](<#removing-matter-service-example>)
+
 1. Navigate to directory containing installed matter apps
 	```bash
-	cd /matter-application
+	cd /matter-app-examples or /matter-app-port-examples
 	```
 2. List installed matter apps
 	```bash
@@ -270,15 +351,34 @@ The steps to build matter is the same as the one from AmebaSmart Yocto SDK
 	```bash
 	./chip-lighting-app --wifi --discriminator 3840
 	```
-4. Look for the following line in the output logs and open the link in a web browser to see the QR code for commissioning
-	```bash
-	CHIP:SVR: https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT%3A-24J042C00KA0648G00
+4. Matter application should start and do initialization
 	```
-	- You should observe the following generated QR code,
+	[1520624087.811811][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Using KVS config file: /tmp/chip_kvs
+	[1520624087.813484][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Attempt to re-initialize with KVS config file: /tmp/chip_kvs
+	[1520624087.824819][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Using KVS config file: /tmp/chip_factory.ini
+	[1520624087.825400][1577:1577] CHIP:DL: ChipLinuxStorage::Init: Using KVS config file: /tmp/chip_config.ini
+	...
+	```
 
-		![QR code for commissioning with discriminator 3840](<images/commissioning_qr_code_discriminator_3840.png>)
+#### Stopping the Application
+1. Send terminate signal by pressing Ctrl + C
+	```bash
+	^C[1520624091.100455][1577:1577] CHIP:DL: Select failed: src/system/SystemLayerImplSelect.cpp:714: OS Error 0x02000004: Interrupted system call
+	[1520624091.100594][1577:1577] CHIP:ZCL: Emitting ShutDown event
+	[1520624091.100750][1577:1577] CHIP:EVL: LogEvent event number: 0x0000000000120002 priority: 2, endpoint id:  0x0 cluster id: 0x0000_0028 event id: 0x1 Epoch timestamp: 0x000001620C423FDC
+	```
+2. Matter Application should stop
 
-		The QR code can be scanned by a commissioner (smartphone running Google Home, Apple HomeKit, Samsung SmartThings, or Home Assistant).
+## Expected Output Log
+Look for the following line in the output logs and open the link in a web browser to see the QR code for commissioning
+```bash
+CHIP:SVR: https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT%3A-24J042C00KA0648G00
+```
+- You should observe the following generated QR code,
+
+	![QR code for commissioning with discriminator 3840](<images/commissioning_qr_code_discriminator_3840.png>)
+
+	The QR code can be scanned by a commissioner (smartphone running Google Home, Apple HomeKit, Samsung SmartThings, or Home Assistant).
 
 # Commissioning
 To commission using Google Home, Apple Homekit, Samsung SmartThings, or Home Assistant, consult the vendor’s guide.
@@ -350,11 +450,11 @@ rm -rf /tmp/chip*
 # Yocto Matter directories
 ## Installed matter application
 ### Compiled matter applications
-- `~/rtl8730e-linux-sdk-3.1-release/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-non-ported-examples/0.1-r0/image/`
+- `~/rtl8730e-linux-sdk/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-app-examples/0.1-r0/image/`
 ### Stripped matter applications
-- `~/rtl8730e-linux-sdk-3.1-release/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-non-ported-examples/0.1-r0/package`
+- `~/rtl8730e-linux-sdk/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-app-examples/0.1-r0/package`
 ## Logs
-- `~/rtl8730e-linux-sdk-3.1-release/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-non-ported-examples/0.1-r0/temp/`
+- `~/rtl8730e-linux-sdk/build_rtl8730elh-va8-generic/tmp/work/cortexa32hf-neon-rtk-linux-gnueabi/matter-app-examples/0.1-r0/temp/`
 
 # Yocto Troubleshooting
 [AmebaSmart Yocto Troubleshoot](<AmebaSmart Yocto Troubleshoot.md>)

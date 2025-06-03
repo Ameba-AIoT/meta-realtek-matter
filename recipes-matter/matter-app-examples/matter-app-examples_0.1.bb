@@ -1,4 +1,4 @@
-require matter-non-ported-examples.inc
+require matter-app-examples.inc
 inherit externalsrc
 
 EXTERNALSRC_SYMLINKS = ""
@@ -25,7 +25,7 @@ gn_gen () {
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     
     if [ ! -f "${S}/scripts/activate.sh" ]; then
-        bbfatal "Could not find ${S}/scripts/activate.sh. Check that variable CHIP_ROOT at ${SCRIPT_DIR}/matter.inc is correctly set."
+        bbfatal "Could not find ${S}/scripts/activate.sh. Check that variable CHIP_ROOT at ${SCRIPT_DIR}/matter-app-examples.inc is correctly set."
         return 1
     fi
 
@@ -100,7 +100,7 @@ ninja_build () {
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     
     if [ ! -f "${S}/scripts/activate.sh" ]; then
-        bbfatal "Could not find ${S}/scripts/activate.sh. Check that variable CHIP_ROOT at ${SCRIPT_DIR}/matter.inc is correctly set."
+        bbfatal "Could not find ${S}/scripts/activate.sh. Check that variable CHIP_ROOT at ${SCRIPT_DIR}/matter-app-examples.inc is correctly set."
         return 1
     fi
 

@@ -52,12 +52,16 @@ This example demonstrates controlling LED brightness.
 - Using `rtk,data-tx-time0h = <0xC>` as an example, `0xC` in decimal is `12`. So, `time0h` corresponds to `12 * 25ns = 300ns`
 
 ## Building
-1. Ensure that `matter` is added to `DISTRO_FEATURES` at `local.conf`
+1. Ensure that `matter` is added to `DISTRO_FEATURES` at `${BUILDDIR}/conf/local.conf`
 ```bash
 DISTRO_FEATURES:append = " matter "
 ```
+- The path to `${BUILDDIR}` can be found by running the following command only after `source envsetup.sh` is run
+```bash
+echo ${BUILDDIR}
+```
 
-2. Edit the file `sources/yocto/meta-realtek-matter/recipes-matter/matter-ported-examples/matter-ported-examples.inc`, with the following
+2. Edit the file `sources/yocto/meta-realtek-matter/recipes-matter/matter-app-port-examples/matter-app-port-examples.inc`, with the following
 ```bash
 MATTER_APP_NAME ??= " \
     linux-lighting-app \
@@ -84,7 +88,7 @@ We shall use chip-tool to control the led.
 
 1. On target board, start the example
 ```bash
-cd /matter-ported-examples
+cd /matter-app-port-examples
 ./linux-lighting-app --wifi --discriminator 3840
 ```
 

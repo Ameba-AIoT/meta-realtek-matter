@@ -4,8 +4,12 @@ SECTION = "meta-realtek-matter"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
+# Choose the matter ported example apps you want to build. Refer to sources/matter/examples directory for possible options.
+# Able to build matter ported apps:
+#    linux-lighting-app \
+#
 MATTER_APP_NAME ??= " \
-    linux-custom-dac-app \
+    linux-lighting-app \
     "
 
 # Specify path to the root directory of connectedhomeip repository
@@ -18,11 +22,12 @@ MATTER_APP_SRC_DIR ??= "${TOPDIR}/../sources/yocto/meta-realtek-matter/examples/
 MATTER_BUILD_DIR ??= "out/arm"
 
 # Specify the directory where the Matter application will be installed on the target device
-MATTER_APP_TARGET_DIR ??= "/matter-ported-examples"
+MATTER_APP_TARGET_DIR ??= "/matter-app-port-examples"
 
 # Specify CFLAGS to be passed
 PLATFORM_CFLAGS .= '-DCHIP_DEVICE_CONFIG_WIFI_STATION_IF_NAME=\"wlan0\"", "'
 PLATFORM_CFLAGS .= '-DCHIP_DEVICE_CONFIG_LINUX_DHCPC_CMD=\"udhcpc -b -i %s \"", "'
+
 
 # Specify gn args to be passed to CHIP build. These will be placed inside --args as a string.
 # Only lighting-app can import(\"//with_pw_rpc.gni\")
@@ -34,6 +39,7 @@ MATTER_GN_ARGS ??= ' \
     chip_enable_rotating_device_id=true \
     target_cflags=[ "${PLATFORM_CFLAGS}" ] \
     '
+
 
 # Specify gn gen arguments. These are arguments passed to gn gen.
 MATTER_GN_GEN_ARGS ??= "--export-compile-commands"

@@ -17,7 +17,7 @@ Flashing image involves three steps:
 	3. Release Download button
 
 ## Copy Linux images from Ubuntu to Windows
-The Linux images built by Yocto can be found at `rtl8730e-linux-sdk-3.1-release/images/`.
+The Linux images built by Yocto can be found at `rtl8730e-linux-sdk/images/`.
 
 Copy from Ubuntu to Windows the following:
 1. `km4_boot_all.bin`
@@ -34,7 +34,7 @@ Copy from Ubuntu to Windows the following:
 - Below shows example commands to copy images from Ubuntu (in VMware) to Windows folder `~/Documents/Realtek/Ameba/AmebaSmart/tools/ameba/binaries/va-x-xxx/`
     - va8-generic
 	```bash
-	IMG_DIRECTORY="${HOME}/dev/rtl8730e-linux-sdk-3.1-release/images/"
+	IMG_DIRECTORY="${HOME}/dev/rtl8730e-linux-sdk/images/"
 	IMG_DESTINATION="/mnt/hgfs/Documents_ext/Realtek/Ameba/AmebaSmart/tools/ameba/binaries/va-8-generic/"
 	cp ${IMG_DIRECTORY}km4_boot_all.bin ${IMG_DESTINATION} && \
 	cp ${IMG_DIRECTORY}km0_km4_app.bin ${IMG_DESTINATION} && \
@@ -46,7 +46,7 @@ Copy from Ubuntu to Windows the following:
 	```
     - va8-full
 	```bash
-	IMG_DIRECTORY="${HOME}/dev/rtl8730e-linux-sdk-3.1-release/images/"
+	IMG_DIRECTORY="${HOME}/dev/rtl8730e-linux-sdk/images/"
 	IMG_DESTINATION="/mnt/hgfs/Documents_ext/Realtek/Ameba/AmebaSmart/tools/ameba/binaries/va-8-full"
 	cp ${IMG_DIRECTORY}km4_boot_all.bin ${IMG_DESTINATION} && \
 	cp ${IMG_DIRECTORY}km0_km4_app.bin ${IMG_DESTINATION} && \
@@ -58,7 +58,7 @@ Copy from Ubuntu to Windows the following:
 	```
 
 ### Finding dtb filenames
-- At images directory, `~/rtl8730e-linux-sdk-3.1-release/images/`
+- At images directory, `~/rtl8730e-linux-sdk/images/`
 - ameba-generic
 	```bash
 	find . -mindepth 1 ! -type l | grep ".dtb" | grep "generic"
@@ -69,8 +69,8 @@ Copy from Ubuntu to Windows the following:
 	```
 
 ## Windows Image Tool
-1. Launch Windows Image Tool at `rtl8730e-linux-sdk-3.1-release/tools/ameba/ImageTool/AmebaImageTool.exe`
-2. Open -> Device Profile. Device Profile can be found at `rtl8730e-linux-sdk-3.1-release/tools/ameba/DeviceProfiles/`
+1. Launch Windows Image Tool at `rtl8730e-linux-sdk/tools/ameba/ImageTool/AmebaImageTool.exe`
+2. Open -> Device Profile. Device Profile can be found at `rtl8730e-linux-sdk/tools/ameba/DeviceProfiles/`
 	- AmebaSmart-VA7: AmebaSmart_Linux_NAND_128MB_VA7.rdev
 	- AmebaSmart-VA8: AmebaSmart_Linux_NAND_256MB_VA8.rdev
 3.  Select respective `.bin` and `.img` that was built using Yocto

@@ -1,0 +1,221 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          matter-app
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     3 5
+# Default-Stop:      0 1 6
+# Short-Description: Run matter-app as service/daemon
+### END INIT INFO
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="Matter Application"
+NAME="matter-app"
+PIDFILE=/var/run/$NAME.pid
+LOGFILE=/var/log/$NAME.log
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Set DAEMON to any example that you would like to run as service/daemon
+# DAEMON format: {MATTER_APP_TARGET_DIR}/{MATTER_APP_NAME}
+# e.g: /matter-app-examples/chip-lighting-app, /matter-app-port-examples/linux-custom-dac-app
+DAEMON="/matter-app-port-examples/linux-lighting-app"
+DAEMON_ARGS="--wifi --vendor-id 0xFFF1 --product-id 0x8001 --passcode 20202021 --discriminator 3840"
+
+# WiFi Configurable variables
+WIFI_IF="wlan0" # WiFi interface
+
+# BLE Configurable variables
+BLE_EN="true" # Enable BLE for Matter?
+BLE_IF="hci0" # BLE interface
+
+# Interface waiting
+INTERFACE_WAIT_TIMEOUT=30 # Max wait time in seconds (0 = no timeout)
+INTERFACE_WAIT_INTERVAL=1 # Check interval in seconds
+
+# Interface status
+wifi_status=""
+ble_status=""
+
+. /etc/init.d/functions || exit 1
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Interface existence checks
+wifi_is_ready() {
+    wifi_dbus_reply=$(dbus-send --system --print-reply --dest=fi.w1.wpa_supplicant1 \
+        /fi/w1/wpa_supplicant1 fi.w1.wpa_supplicant1.GetInterface string:"$WIFI_IF" 2>&1)
+    dbus_error_reply=$(echo "$wifi_dbus_reply" | grep "Error")
+
+    # Return 1 (failure) if error, 0 (success) otherwise
+    if [ -n "$dbus_error_reply" ]; then
+        echo "[$NAME] dbus-send error: $dbus_error_reply"
+        wifi_status="not ready"
+        return 1
+    else
+        wifi_status="ready"
+        return 0
+    fi
+}
+ble_is_ready() {
+    ble_dbus_reply=$(dbus-send --system --print-reply --dest=org.bluez /org/bluez/$BLE_IF \
+        org.freedesktop.DBus.Properties.Get string:"org.bluez.Adapter1" string:"Address" 2>&1)
+    dbus_error_reply=$(echo "$ble_dbus_reply" | grep "Error")
+
+    # Return 1 (failure) if error, 0 (success) otherwise
+    if [ -n "$dbus_error_reply" ]; then
+        echo "[$NAME] dbus-send error: $dbus_error_reply"
+        ble_status="not ready"
+        return 1
+    else
+        ble_status="ready"
+        return 0
+    fi
+}
+ble_enabled() { [ "$BLE_EN" = "true" ]; }
+
+#
+# Function that checks if all the interfaces are ready
+#
+interfaces_are_ready() {
+    # Return 0 (success) if interfaces are ready, 1 (failure) otherwise
+    if ble_enabled; then
+        if wifi_is_ready && ble_is_ready; then
+            return 0
+        fi
+    else
+        if wifi_is_ready; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+#
+# Function that really starts the service/daemon
+#
+start_matter_app_service() {
+    echo -n "Starting $DESC: "
+    start-stop-daemon --start \
+        --make-pidfile --pidfile $PIDFILE \
+        --exec "$DAEMON" -- $DAEMON_ARGS 2>&1 | (tee $LOGFILE) &
+    echo "$NAME."
+}
+
+#
+# Function that starts the service/daemon once interfaces are ready
+#
+matter_app_wait_interfaces() {
+    elapsed=0
+
+    while true; do
+        if interfaces_are_ready; then
+            echo "[$NAME] Interfaces for Matter are ready."
+            start_matter_app_service
+            break
+        else
+            echo -n "[$NAME] WiFi: $wifi_status"
+            if ble_enabled; then
+                echo -n ", BLE: $ble_status"
+            fi
+            echo ""
+        fi
+
+        # Timeout check (if enabled)
+        if [ $INTERFACE_WAIT_TIMEOUT -ne 0 ] && [ $elapsed -ge $INTERFACE_WAIT_TIMEOUT ]; then
+            echo "[$NAME] Timeout: interfaces for Matter are not ready after $INTERFACE_WAIT_TIMEOUT seconds."
+            break
+        fi
+
+        sleep $INTERFACE_WAIT_INTERVAL
+        elapsed=$((elapsed + $INTERFACE_WAIT_INTERVAL))
+    done
+}
+
+#
+# Function that starts the service/daemon
+#
+start_matter_app() {
+    if interfaces_are_ready; then
+        # Start matter-app if all interfaces are ready
+        start_matter_app_service
+    else
+        # Wait in the background until all the interfaces are ready
+        matter_app_wait_interfaces 2>&1 &
+    fi
+}
+
+#
+# Function that stops the service/daemon
+#
+stop_matter_app() {
+    echo -n "Stopping $DESC: "
+    start-stop-daemon --stop --retry 5 --oknodo \
+        --exec $DAEMON
+    echo "$NAME."
+    rm -f "$PIDFILE"
+}
+
+#
+# Function that factory resets matter-app
+#
+factory_reset_matter_app() {
+    echo "Factory reset $DESC:"
+
+    echo -n "[$NAME] Clear CHIP data... "
+    rm -rf /tmp/chip*
+    echo "OK"
+
+    echo -n "[$NAME] Disconnecting from WiFi... "
+    wpa_cli -i $WIFI_IF disconnect
+
+    echo -n "[$NAME] Removing all saved WiFi networks... "
+    wpa_cli -i $WIFI_IF list_networks | awk 'NR>1 {print $1}' | xargs -I{} wpa_cli -i $WIFI_IF remove_network {}
+    wpa_cli -i $WIFI_IF save_config
+
+    echo "$NAME."
+    reboot
+}
+
+#
+# Function that shows the service/daemon status
+#
+status_of_matter_app() {
+    local pid status
+
+    status=0
+    # pidof output null when no program is running, so no "2>/dev/null".
+    pid=`pidofproc $DAEMON` || status=$?
+    case $status in
+        0)
+            echo "$NAME: $DESC is running ($pid)."
+            exit 0
+            ;;
+        *)
+            echo "$NAME: $DESC is not running." >&2
+            exit $status
+            ;;
+    esac
+}
+
+case "$1" in
+    start)
+        start_matter_app
+        ;;
+    restart|reload|force-reload)
+        stop_matter_app
+        start_matter_app
+        ;;
+    stop|force-stop)
+        stop_matter_app
+        ;;
+    factory-reset)
+        factory_reset_matter_app
+        ;;
+    status)
+        status_of_matter_app
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|factory-reset|status|restart|reload|force-reload}"
+        exit 1
+        ;;
+esac

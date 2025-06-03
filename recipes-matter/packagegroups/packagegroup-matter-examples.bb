@@ -9,7 +9,8 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 RDEPENDS:${PN} = "\
-    matter-non-ported-examples \
-    matter-ported-examples \
-    matter-custom-dac-examples \
+    matter-app-examples \
+    matter-app-port-examples \
+    matter-app-port-custom-dac-examples \
+    matter-service-example \
 "
